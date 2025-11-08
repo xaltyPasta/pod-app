@@ -1,66 +1,44 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
 
-export default function Home() {
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import HomeLayout from "@/components/HomeLayout";
+
+export default function HomePage() {
+  const { data: session } = useSession();
+  const user = {
+    name: session?.user?.name ?? null,
+    agentId: (session?.user as any)?.agentId ?? null, // include in session if you expose it
+    image: session?.user?.image ?? null,
+  };
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="container py-5 text-center">
+      <div className="mb-4">
+        {/* The header is now provided by HomeLayout; this is the hero area */}
+        <p className="text-muted">Digitize your delivery confirmations with ease.</p>
+      </div>
+
+      {session ? (
+        <div className="d-flex justify-content-center flex-wrap gap-3">
+          <Link href="/scan" className="btn btn-primary">
+            Start Scanning
+          </Link>
+          <Link href="/history" className="btn btn-outline-secondary">
+            View History
+          </Link>
+          <Link href="/search-pod" className="btn btn-outline-dark">
+            Search POD
+          </Link>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      ) : (
+        <div>
+          <p className="text-muted mb-3">Sign in to start capturing deliveries.</p>
+          <Link href="/signin" className="btn btn-primary">
+            Sign in with Google
+          </Link>
         </div>
-      </main>
+      )}
     </div>
   );
 }
