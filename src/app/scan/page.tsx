@@ -42,6 +42,15 @@ export default function ScanPage() {
     const rafRef = useRef<number | null>(null);
     const scanningRef = useRef(false);
 
+    // Prevent background scroll when full-screen overlay is open
+    useEffect(() => {
+        if (isCapturing) {
+            const prev = document.body.style.overflow;
+            document.body.style.overflow = "hidden";
+            return () => { document.body.style.overflow = prev; };
+        }
+    }, [isCapturing]);
+
     useEffect(() => () => stopCamera(), []);
 
     async function startCamera() {
@@ -62,8 +71,11 @@ export default function ScanPage() {
                 vids[1]?.deviceId ||
                 vids[0]?.deviceId;
 
+            // Favor rear camera and a decent mobile-friendly resolution
             const constraints: MediaStreamConstraints = {
-                video: back ? { deviceId: { exact: back } } : { facingMode: { ideal: "environment" } },
+                video: back
+                    ? { deviceId: { exact: back } }
+                    : { facingMode: { ideal: "environment" } },
                 audio: false,
             };
 
@@ -171,7 +183,7 @@ export default function ScanPage() {
                 </div>
             )}
 
-            {/* Camera Controls */}
+            {/* Camera Controls (only when not capturing) */}
             {!isCapturing && (
                 <div className="d-flex justify-content-center gap-2 mb-3">
                     <button className="btn btn-primary" onClick={startCamera}>
@@ -180,37 +192,51 @@ export default function ScanPage() {
                 </div>
             )}
 
-            {/* Full-width Video Preview (full-bleed) */}
-            <div className={`${isCapturing ? "" : "d-none"}`}>
+            {/* Full-screen mobile-friendly preview overlay */}
+            {isCapturing && (
                 <div
-                    className="ratio ratio-16x9"
+                    className="position-fixed"
                     style={{
-                        width: "100vw",
-                        maxWidth: "100vw",
-                        marginLeft: "calc(50% - 50vw)",
+                        inset: 0,
+                        zIndex: 1050,           // above page content
+                        background: "#000",
                     }}
                 >
                     <video
                         ref={videoRef}
-                        className="w-100 rounded-0"
                         playsInline
                         autoPlay
                         muted
+                        // Fill the phone screen, keep aspect, crop edges if needed
+                        style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            width: "100vw",
+                            height: "100dvh",
+                            objectFit: "cover",
+                        }}
+                        className="rounded-0"
                     />
+
+                    {/* Bottom safe-area Stop button */}
+                    <div
+                        className="position-absolute start-0 end-0 d-flex justify-content-center"
+                        style={{
+                            bottom: "calc(env(safe-area-inset-bottom) + 16px)",
+                            paddingLeft: "env(safe-area-inset-left)",
+                            paddingRight: "env(safe-area-inset-right)",
+                        }}
+                    >
+                        <button className="btn btn-danger px-4 py-2" onClick={stopCamera}>
+                            Stop
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Hidden canvas for scanning */}
             <canvas ref={canvasRef} style={{ display: "none" }} />
-
-            {/* Bottom fixed Stop button while capturing */}
-            {isCapturing && (
-                <div className="position-fixed bottom-0 start-0 end-0 p-3 d-flex justify-content-center">
-                    <button className="btn btn-danger" onClick={stopCamera}>
-                        Stop
-                    </button>
-                </div>
-            )}
         </div>
     );
 }
