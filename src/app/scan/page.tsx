@@ -24,6 +24,11 @@ function explainGUMError(err: any) {
     }
 }
 
+// Split at first whitespace, "/", "-", "\" or "|"
+function normalizeAwb(raw: string) {
+    return raw.trim().split(/[|\s\/\\-]+/)[0];
+}
+
 export default function ScanPage() {
     const router = useRouter();
     const [manualAwb, setManualAwb] = useState("");
@@ -115,11 +120,7 @@ export default function ScanPage() {
                 const code = jsQR(img.data, img.width, img.height);
                 if (code?.data) {
                     stopCamera();
-
-                    // ✅ Keep only substring up to first whitespace OR first "|" (pipe)
-                    const raw = code.data.trim();
-                    const awb = raw.split(/[|\s]+/)[0];
-
+                    const awb = normalizeAwb(code.data);
                     router.push(`/capture?awb=${encodeURIComponent(awb)}`);
                     return;
                 }
@@ -129,8 +130,7 @@ export default function ScanPage() {
     }
 
     function proceedManual() {
-        // Apply the same cropping rule for manual input
-        const awb = manualAwb.trim().split(/[|\s]+/)[0];
+        const awb = normalizeAwb(manualAwb);
         if (!awb) return setError("Enter AWB to proceed.");
         router.push(`/capture?awb=${encodeURIComponent(awb)}`);
     }
@@ -171,25 +171,28 @@ export default function ScanPage() {
                 </div>
             )}
 
-            {/* Centered Camera Controls */}
-            <div className="d-flex justify-content-center gap-2 mb-3">
-                {!isCapturing ? (
+            {/* Camera Controls */}
+            {!isCapturing && (
+                <div className="d-flex justify-content-center gap-2 mb-3">
                     <button className="btn btn-primary" onClick={startCamera}>
                         Open Camera
                     </button>
-                ) : (
-                    <button className="btn btn-danger" onClick={stopCamera}>
-                        Stop
-                    </button>
-                )}
-            </div>
+                </div>
+            )}
 
-            {/* Centered Video Preview */}
-            <div className={`d-flex justify-content-center mb-2 ${isCapturing ? "" : "d-none"}`}>
-                <div className="ratio ratio-16x9 w-75">
+            {/* Full-width Video Preview (full-bleed) */}
+            <div className={`${isCapturing ? "" : "d-none"}`}>
+                <div
+                    className="ratio ratio-16x9"
+                    style={{
+                        width: "100vw",
+                        maxWidth: "100vw",
+                        marginLeft: "calc(50% - 50vw)",
+                    }}
+                >
                     <video
                         ref={videoRef}
-                        className="w-100 rounded shadow-sm"
+                        className="w-100 rounded-0"
                         playsInline
                         autoPlay
                         muted
@@ -197,7 +200,17 @@ export default function ScanPage() {
                 </div>
             </div>
 
+            {/* Hidden canvas for scanning */}
             <canvas ref={canvasRef} style={{ display: "none" }} />
+
+            {/* Bottom fixed Stop button while capturing */}
+            {isCapturing && (
+                <div className="position-fixed bottom-0 start-0 end-0 p-3 d-flex justify-content-center">
+                    <button className="btn btn-danger" onClick={stopCamera}>
+                        Stop
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
