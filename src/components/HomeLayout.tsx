@@ -114,7 +114,7 @@ export default function HomeLayout({ user, children }: HomeLayoutProps) {
                         onClick={() => setProfileOpen(v => !v)}
                         title={displayName}
                     >
-                        {displayName}
+                        {profileOpen ? displayName : " "}
                     </div>
 
                     {profileOpen && (
@@ -135,6 +135,7 @@ export default function HomeLayout({ user, children }: HomeLayoutProps) {
                             </div>
                         </div>
                     )}
+
                 </div>
             </header>
 
