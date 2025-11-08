@@ -36,9 +36,6 @@ export default function SignInPage() {
                             </p>
                         </div>
                     </div>
-                    <p className="text-center mt-3">
-                        <a href="/">Back to Home</a>
-                    </p>
                 </div>
             </div>
         </div>
