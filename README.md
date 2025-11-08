@@ -61,58 +61,56 @@ Success Confirmation
 ## 📁 Project Structure
 
 ```
-Directory structure:
 └── xaltypasta-pod-app/
-    ├── README.md
-    ├── eslint.config.mjs
-    ├── LICENSE
-    ├── next.config.ts
-    ├── package.json
-    ├── tsconfig.json
+    ├── README.md                  # Documentation file (this one)
+    ├── eslint.config.mjs          # ESLint configuration for linting
+    ├── LICENSE                    # Open-source license (MIT or custom)
+    ├── next.config.ts             # Next.js configuration
+    ├── package.json               # Project metadata, dependencies, and scripts
+    ├── tsconfig.json              # TypeScript configuration
     ├── prisma/
-    │   └── schema.prisma
+    │   └── schema.prisma          # Prisma schema defining database models and relations
     └── src/
-        ├── global.d.ts
-        ├── middleware.ts
+        ├── global.d.ts            # Global TypeScript type declarations
+        ├── middleware.ts          # Middleware for authentication checks & route protection
         ├── app/
-        │   ├── globals.css
-        │   ├── layout.tsx
-        │   ├── page.module.css
-        │   ├── page.tsx
-        │   ├── providers.tsx
+        │   ├── globals.css        # Global styles applied across the app
+        │   ├── layout.tsx         # Root layout wrapper for all pages
+        │   ├── page.module.css    # Styles for the home page
+        │   ├── page.tsx           # Main landing (Home) page
+        │   ├── providers.tsx      # Context providers (NextAuth, Theme, etc.)
         │   ├── api/
         │   │   ├── auth/
-        │   │   │   └── [...nextauth]/
-        │   │   │       └── route.ts
+        │   │   │   └── [...nextauth]/route.ts  # NextAuth API route (handles login/logout/session)
         │   │   └── deliveries/
-        │   │       ├── route.ts
-        │   │       └── [awb]/
-        │   │           └── route.ts
+        │   │       ├── route.ts                # Handles POST/GET for all deliveries
+        │   │       └── [awb]/route.ts          # Handles GET/UPDATE for specific delivery by AWB
         │   ├── capture/
-        │   │   └── page.tsx
+        │   │   └── page.tsx                    # Page for capturing proof images
         │   ├── history/
-        │   │   └── page.tsx
+        │   │   └── page.tsx                    # Page displaying user's delivery history
         │   ├── scan/
-        │   │   └── page.tsx
+        │   │   └── page.tsx                    # Page for scanning QR codes (mobile optimized)
         │   ├── search-pod/
-        │   │   └── page.tsx
+        │   │   └── page.tsx                    # Page for searching proof of delivery by AWB
         │   ├── signin/
-        │   │   └── page.tsx
+        │   │   └── page.tsx                    # Authentication/sign-in page
         │   └── success/
-        │       └── page.tsx
+        │       └── page.tsx                    # Success confirmation screen after upload
         ├── components/
-        │   ├── CaptureWidget.tsx
-        │   ├── HomeLayout.tsx
-        │   ├── Scanner.tsx
-        │   └── SignOutButton.tsx
+        │   ├── CaptureWidget.tsx               # Handles image capture and preview UI
+        │   ├── HomeLayout.tsx                  # Layout wrapper for main navigation
+        │   ├── Scanner.tsx                     # Custom QR scanner component (mobile-friendly)
+        │   └── SignOutButton.tsx               # Reusable button for user logout
         ├── lib/
-        │   ├── auth.ts
-        │   ├── cloudinary.ts
-        │   ├── db.ts
-        │   ├── sheets.ts
-        │   └── uploadMedia.ts
+        │   ├── auth.ts                         # NextAuth configuration and session helpers
+        │   ├── cloudinary.ts                   # Cloudinary upload utility and credentials
+        │   ├── db.ts                           # Prisma client initialization
+        │   ├── sheets.ts                       # Functions for integrating Google Sheets (if enabled)
+        │   └── uploadMedia.ts                  # Function for handling file uploads to Cloudinary
         └── types/
-            └── index.d.ts
+            └── index.d.ts                      # Custom TypeScript type definitions
+
 
 ```
 
