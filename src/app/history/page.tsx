@@ -42,7 +42,7 @@ export default function HistoryPage() {
                             <tr>
                                 <th>AWB</th>
                                 <th>Date/Time</th>
-                                <th>Delivery Agent Id</th>
+                                {/* <th>Delivery Agent Id</th> */}
                                 <th>Media Type</th>
                                 <th>Proof</th>
                             </tr>
@@ -52,7 +52,7 @@ export default function HistoryPage() {
                                 <tr key={d.id}>
                                     <td>{d.awb}</td>
                                     <td>{new Date(d.createdAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</td>
-                                    <td>{d.deliveredById}</td>
+                                    {/* <td>{d.deliveredById}</td> */}
                                     <td className="text-capitalize">{d.mediaType}</td>
                                     <td>
                                         <a href={d.mediaUrl} target="_blank" rel="noopener noreferrer">

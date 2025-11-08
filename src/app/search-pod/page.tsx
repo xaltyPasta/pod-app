@@ -103,7 +103,7 @@ export default function SearchPodPage() {
                             <tr>
                                 <th>AWB</th>
                                 <th>Date/Time</th>
-                                <th>Delivery Agent Id</th>
+                                {/* <th>Delivery Agent Id</th> */}
                                 <th>Media Type</th>
                                 <th>Proof</th>
                                 {/* <th style={{ width: 120 }}>Actions</th> */}
@@ -120,7 +120,7 @@ export default function SearchPodPage() {
                                                 timeZone: "Asia/Kolkata",
                                             })}
                                         </td>
-                                        <td>{r.deliveredById}</td>
+                                        {/* <td>{r.deliveredById}</td> */}
                                         <td className="text-capitalize">{r.mediaType}</td>
                                         <td>
                                             <a href={r.mediaUrl} target="_blank" rel="noopener noreferrer">
