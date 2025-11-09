@@ -61,54 +61,57 @@ Success Confirmation
 ## 📁 Project Structure
 
 ```
-xaltypasta-pod-app/
-├── README.md                      # Project documentation
-├── SYSTEM_DESIGN.md              # Architecture & design docs
-├── next.config.ts                # Next.js configuration
-├── package.json                  # Dependencies
-├── tsconfig.json                 # TypeScript config
-├── .env.local                    # Environment variables (not in repo)
-│
-├── prisma/
-│   └── schema.prisma            # Database schema & models
-│
-└── src/
-    ├── app/                     # Next.js App Router pages
-    │   ├── layout.tsx           # Root layout with providers
-    │   ├── page.tsx             # Home/dashboard page
-    │   ├── signin/              # Google sign-in page
-    │   ├── scan/                # AWB scanner & manual entry
-    │   ├── capture/             # Camera capture & upload
-    │   ├── history/             # User's delivery history
-    │   ├── search-pod/          # Search POD by AWB
-    │   ├── success/             # Upload confirmation
-    │   │
-    │   └── api/                 # Server-side API routes
-    │       ├── auth/
-    │       │   └── [...nextauth]/
-    │       │       └── route.ts  # NextAuth configuration
-    │       └── deliveries/
-    │           ├── route.ts      # Create/list deliveries
-    │           └── [id]/
-    │               └── route.ts  # Get delivery by ID
-    │
-    ├── components/              # Reusable React components
-    │   ├── Navbar.tsx           # Navigation bar
-    │   ├── Scanner.tsx          # QR/Barcode scanner
-    │   ├── Camera.tsx           # Camera capture UI
-    │   └── DeliveryCard.tsx     # Delivery item display
-    │
-    ├── lib/                     # Server utilities
-    │   ├── auth.ts              # NextAuth configuration
-    │   ├── prisma.ts            # Prisma client singleton
-    │   ├── cloudinary.ts        # Cloudinary helpers
-    │   └── sheets.ts            # Google Sheets integration
-    │
-    ├── types/                   # TypeScript definitions
-    │   ├── delivery.ts          # Delivery types
-    │   └── auth.ts              # Auth types
-    │
-    └── middleware.ts            # Auth protection middleware
+└── xaltypasta-pod-app/
+    ├── README.md                  # Documentation file (this one)
+    ├── eslint.config.mjs          # ESLint configuration for linting
+    ├── LICENSE                    # Open-source license (MIT or custom)
+    ├── next.config.ts             # Next.js configuration
+    ├── package.json               # Project metadata, dependencies, and scripts
+    ├── tsconfig.json              # TypeScript configuration
+    ├── prisma/
+    │   └── schema.prisma          # Prisma schema defining database models and relations
+    └── src/
+        ├── global.d.ts            # Global TypeScript type declarations
+        ├── middleware.ts          # Middleware for authentication checks & route protection
+        ├── app/
+        │   ├── globals.css        # Global styles applied across the app
+        │   ├── layout.tsx         # Root layout wrapper for all pages
+        │   ├── page.module.css    # Styles for the home page
+        │   ├── page.tsx           # Main landing (Home) page
+        │   ├── providers.tsx      # Context providers (NextAuth, Theme, etc.)
+        │   ├── api/
+        │   │   ├── auth/
+        │   │   │   └── [...nextauth]/route.ts  # NextAuth API route (handles login/logout/session)
+        │   │   └── deliveries/
+        │   │       ├── route.ts                # Handles POST/GET for all deliveries
+        │   │       └── [awb]/route.ts          # Handles GET/UPDATE for specific delivery by AWB
+        │   ├── capture/
+        │   │   └── page.tsx                    # Page for capturing proof images
+        │   ├── history/
+        │   │   └── page.tsx                    # Page displaying user's delivery history
+        │   ├── scan/
+        │   │   └── page.tsx                    # Page for scanning QR codes (mobile optimized)
+        │   ├── search-pod/
+        │   │   └── page.tsx                    # Page for searching proof of delivery by AWB
+        │   ├── signin/
+        │   │   └── page.tsx                    # Authentication/sign-in page
+        │   └── success/
+        │       └── page.tsx                    # Success confirmation screen after upload
+        ├── components/
+        │   ├── CaptureWidget.tsx               # Handles image capture and preview UI
+        │   ├── HomeLayout.tsx                  # Layout wrapper for main navigation
+        │   ├── Scanner.tsx                     # Custom QR scanner component (mobile-friendly)
+        │   └── SignOutButton.tsx               # Reusable button for user logout
+        ├── lib/
+        │   ├── auth.ts                         # NextAuth configuration and session helpers
+        │   ├── cloudinary.ts                   # Cloudinary upload utility and credentials
+        │   ├── db.ts                           # Prisma client initialization
+        │   ├── sheets.ts                       # Functions for integrating Google Sheets (if enabled)
+        │   └── uploadMedia.ts                  # Function for handling file uploads to Cloudinary
+        └── types/
+            └── index.d.ts                      # Custom TypeScript type definitions
+
+
 ```
 
 ---
