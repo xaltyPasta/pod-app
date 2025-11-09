@@ -3,7 +3,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import jsQR from "jsqr";
+import { BrowserMultiFormatReader, IScannerControls } from "@zxing/browser";
+import { BarcodeFormat, DecodeHintType } from "@zxing/library";
 
 function explainGUMError(err: any) {
     const name = err?.name || "";
@@ -24,6 +25,12 @@ function explainGUMError(err: any) {
     }
 }
 
+// Extend capabilities shape safely
+type AnyTrackCapabilities = MediaTrackCapabilities & {
+    focusMode?: string[];
+    torch?: boolean;
+};
+
 // Split at first whitespace, "/", "-", "\" or "|"
 function normalizeAwb(raw: string) {
     return raw.trim().split(/[|\s\/\\-]+/)[0];
@@ -37,17 +44,19 @@ export default function ScanPage() {
     const [error, setError] = useState("");
 
     const videoRef = useRef<HTMLVideoElement | null>(null);
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
-    const rafRef = useRef<number | null>(null);
-    const scanningRef = useRef(false);
+
+    const zxingReaderRef = useRef<BrowserMultiFormatReader | null>(null);
+    const zxingControlsRef = useRef<IScannerControls | null>(null);
 
     // Prevent background scroll when full-screen overlay is open
     useEffect(() => {
         if (isCapturing) {
             const prev = document.body.style.overflow;
             document.body.style.overflow = "hidden";
-            return () => { document.body.style.overflow = prev; };
+            return () => {
+                document.body.style.overflow = prev;
+            };
         }
     }, [isCapturing]);
 
@@ -60,36 +69,74 @@ export default function ScanPage() {
             setError("This browser does not support getUserMedia.");
             return;
         }
+
         try {
             setIsCapturing(true);
-            await Promise.resolve();
 
             const devices = await navigator.mediaDevices.enumerateDevices();
             const vids = devices.filter((d) => d.kind === "videoinput");
-            const back =
+            const backId =
                 vids.find((d) => /back|rear|environment/i.test(d.label))?.deviceId ||
                 vids[1]?.deviceId ||
                 vids[0]?.deviceId;
 
-            // Favor rear camera and a decent mobile-friendly resolution
             const constraints: MediaStreamConstraints = {
-                video: back
-                    ? { deviceId: { exact: back } }
-                    : { facingMode: { ideal: "environment" } },
+                video: backId ? { deviceId: { exact: backId } } : { facingMode: { ideal: "environment" } },
                 audio: false,
             };
-
-            const s = await navigator.mediaDevices.getUserMedia(constraints);
-            streamRef.current = s;
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            streamRef.current = stream;
 
             const v = videoRef.current;
             if (!v) throw new Error("Video element not ready");
-            v.srcObject = s;
+            v.srcObject = stream;
             await v.play();
 
-            setInfo("Scanning… align AWB QR/barcode in the frame.");
-            scanningRef.current = true;
-            loop();
+            // Try enabling continuous autofocus / leave torch off if supported
+            const track = stream.getVideoTracks()[0];
+            const caps = (track.getCapabilities?.() ?? {}) as AnyTrackCapabilities;
+            const advanced: Record<string, unknown>[] = [];
+            if (Array.isArray(caps.focusMode) && caps.focusMode.includes("continuous")) {
+                advanced.push({ focusMode: "continuous" });
+            }
+            if (caps.torch) {
+                advanced.push({ torch: false });
+            }
+            if (advanced.length) {
+                await track.applyConstraints({ advanced } as MediaTrackConstraints).catch(() => { });
+            }
+
+            setInfo("Scanning… align the QR/barcode in the frame.");
+
+            const hints = new Map();
+            hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+                BarcodeFormat.QR_CODE,
+                BarcodeFormat.CODE_128,
+                BarcodeFormat.CODE_39,
+                BarcodeFormat.EAN_13,
+                BarcodeFormat.EAN_8,
+                BarcodeFormat.UPC_A,
+                BarcodeFormat.UPC_E,
+                BarcodeFormat.ITF,
+                BarcodeFormat.PDF_417,
+                BarcodeFormat.AZTEC,
+                BarcodeFormat.DATA_MATRIX,
+            ]);
+
+            const reader = new BrowserMultiFormatReader(hints, {
+                delayBetweenScanAttempts: 300,
+            });
+            zxingReaderRef.current = reader;
+
+            // Await the controls (scanner instance)
+            const controls = await reader.decodeFromVideoElement(videoRef.current!, (result) => {
+                if (result) {
+                    const awb = normalizeAwb(result.getText());
+                    stopCamera();
+                    router.push(`/capture?awb=${encodeURIComponent(awb)}`);
+                }
+            });
+            zxingControlsRef.current = controls;
         } catch (e) {
             setError(explainGUMError(e));
             setIsCapturing(false);
@@ -98,17 +145,22 @@ export default function ScanPage() {
     }
 
     function stopCamera() {
-        if (rafRef.current != null) {
-            cancelAnimationFrame(rafRef.current);
-            rafRef.current = null;
-        }
-        scanningRef.current = false;
+        try {
+            zxingControlsRef.current?.stop(); // Properly stops ZXing scanning
+        } catch { }
+        zxingControlsRef.current = null;
+        zxingReaderRef.current = null;
+
         cleanupStream();
+
         const v = videoRef.current;
         if (v) {
-            try { v.pause(); } catch { }
+            try {
+                v.pause();
+            } catch { }
             v.srcObject = null;
         }
+
         setIsCapturing(false);
         setInfo("");
     }
@@ -116,29 +168,6 @@ export default function ScanPage() {
     function cleanupStream() {
         streamRef.current?.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
-    }
-
-    function loop() {
-        if (!scanningRef.current) return;
-        const v = videoRef.current;
-        const c = canvasRef.current;
-        if (v && c && v.readyState === v.HAVE_ENOUGH_DATA) {
-            c.width = v.videoWidth || 640;
-            c.height = v.videoHeight || 480;
-            const ctx = c.getContext("2d");
-            if (ctx) {
-                ctx.drawImage(v, 0, 0, c.width, c.height);
-                const img = ctx.getImageData(0, 0, c.width, c.height);
-                const code = jsQR(img.data, img.width, img.height);
-                if (code?.data) {
-                    stopCamera();
-                    const awb = normalizeAwb(code.data);
-                    router.push(`/capture?awb=${encodeURIComponent(awb)}`);
-                    return;
-                }
-            }
-        }
-        rafRef.current = requestAnimationFrame(loop);
     }
 
     function proceedManual() {
@@ -198,7 +227,7 @@ export default function ScanPage() {
                     className="position-fixed"
                     style={{
                         inset: 0,
-                        zIndex: 1050,           // above page content
+                        zIndex: 1050,
                         background: "#000",
                     }}
                 >
@@ -207,7 +236,6 @@ export default function ScanPage() {
                         playsInline
                         autoPlay
                         muted
-                        // Fill the phone screen, keep aspect, crop edges if needed
                         style={{
                             position: "absolute",
                             top: 0,
@@ -234,9 +262,6 @@ export default function ScanPage() {
                     </div>
                 </div>
             )}
-
-            {/* Hidden canvas for scanning */}
-            <canvas ref={canvasRef} style={{ display: "none" }} />
         </div>
     );
 }
